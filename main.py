@@ -15,9 +15,18 @@ llm = init_chat_model(
     "anthropic:claude-3-5-haiku-20241022"
 )
 
+# structured output parser
+class MessageClassifier(BaseModel):
+    message_type: Literal["emotional", "logical"] = Field (
+        ...,
+        description = "Classify if the message requires an emotional or logical response"
+    )
+
+
 # setup the state of the graph, define what state agents will have access to
 class State(TypedDict):
     messages: Annotated[list, add_messages] # messages will be of type list and can be modified with add_messages
+    message_type: str | None # decides the kind of request it is to route it to the correct agent
 
 
 # define a graph builder that will work using this state
@@ -39,7 +48,3 @@ graph_builder.add_edge("chatbot", END)
 # run the graph
 graph = graph_builder.compile()
 
-user_input = input("Enter a message: ")
-state = graph.invoke({"messages": [{"role": "user", "content": user_input}]})
-
-print(state["messages"][-1].content)
